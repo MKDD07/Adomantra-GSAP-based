@@ -1,62 +1,35 @@
-/* Adomantra cinematic director: one coordinated GSAP system for 18 homepage scenes.
-   Respects existing specialized pinned sections, Swiper, ScrollSmoother and interactive components. */
-(function(){
- "use strict";
- function init(){
-  if(!window.gsap||!window.ScrollTrigger)return;
-  const gs=window.gsap,ST=window.ScrollTrigger;
-  gs.registerPlugin(ST);
-  const reduced=matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const scenes=[...document.querySelectorAll("[data-ado-scene]")];
-  if(!scenes.length||reduced)return;
-  const mobile=matchMedia("(max-width: 767px)").matches;
-  const special=new Set(["journey","achievements","showcase","approach","window","horizontal","marquee"]);
-  const bar=document.createElement("div");bar.className="ado-cinema-progress";bar.setAttribute("aria-hidden","true");document.body.append(bar);
-  gs.to(bar,{scaleX:1,ease:"none",scrollTrigger:{start:0,end:"max",scrub:.3}});
-  const rail=document.createElement("div");rail.className="ado-cinema-rail";rail.setAttribute("aria-hidden","true");document.body.append(rail);
-  const dots=scenes.map(()=>{const el=document.createElement("span");rail.append(el);return el});
-  function activate(index){dots.forEach((dot,j)=>dot.classList.toggle("is-active",j===index))}
-  const triggers=[];
-  scenes.forEach((section,index)=>{
-    const key=section.dataset.adoScene;
-    const isSpecial=special.has(key);
-    const st=ST.create({trigger:section,start:"top center",end:"bottom center",onToggle:self=>{if(self.isActive)activate(index)}});
-    triggers.push(st);
-    // Animated section handoff: previous scene recedes while next enters.
-    if(!isSpecial&&index>0){
-      gs.fromTo(section,{backgroundColor:"rgba(229,44,53,0)"},{backgroundColor:"rgba(229,44,53,0.018)",ease:"none",scrollTrigger:{trigger:section,start:"top bottom",end:"top 35%",scrub:true},clearProps:"backgroundColor"});
-    }
-    if(index<scenes.length-1&&!isSpecial){
-      const bridge=document.createElement("div");bridge.className="ado-cinema-bridge";bridge.setAttribute("aria-hidden","true");section.append(bridge);
-      gs.fromTo(bridge,{scaleY:0,opacity:0},{scaleY:1,opacity:1,ease:"none",scrollTrigger:{trigger:section,start:"bottom 95%",end:"bottom 35%",scrub:true}});
-    }
-    // Existing pinned/special sections have their own choreography: never overwrite it.
-    if(isSpecial)return;
-    const headings=[...section.querySelectorAll("h1,h2")].filter(el=>!el.closest(".swiper,.accordion,.mobile-menu")).slice(0,3);
-    const paragraphs=[...section.querySelectorAll("p")].filter(el=>!el.closest(".swiper,.accordion,.testimonial,.mobile-menu")).slice(0,3);
-    const cards=[...section.querySelectorAll(".features-card,.service-card,.blog-card,.project-card")].filter(el=>!el.closest(".swiper,.swiper-slide,.accordion")).slice(0,7);
-    const images=[...section.querySelectorAll("img")].filter(el=>!el.closest(".swiper,.swiper-slide,.swiper-wrapper,.logo,.client,.brand,.marquee")).slice(0,3);
-    const tl=gs.timeline({paused:true,defaults:{ease:"power3.out"}});
-    if(headings.length)tl.fromTo(headings,{y:mobile?25:54,autoAlpha:0},{y:0,autoAlpha:1,duration:1.05,stagger:.12,clearProps:"all"},0);
-    if(paragraphs.length)tl.fromTo(paragraphs,{y:24,autoAlpha:0},{y:0,autoAlpha:1,duration:.85,stagger:.1,clearProps:"all"},.2);
-    if(cards.length)tl.fromTo(cards,{y:mobile?18:42,autoAlpha:0},{y:0,autoAlpha:1,duration:1,stagger:.085,clearProps:"all"},.22);
-    if(images.length&&index!==0)tl.fromTo(images,{scale:1.045,autoAlpha:0},{scale:1,autoAlpha:1,duration:1.25,stagger:.1,clearProps:"all"},.2);
-    if(tl.duration())ST.create({trigger:section,start:index===0?"top 96%":"top 85%",once:true,onEnter:()=>tl.play(),onLeaveBack:()=>{if(!tl.progress())tl.progress(1)}});
-    // Subtle parallax restricted to noninteractive standalone imagery.
-    if(!mobile&&index>0)images.forEach(img=>{
-      if(img.closest("[data-speed],[data-parallax],.swiper")||img.naturalWidth===0)return;
-      gs.fromTo(img,{yPercent:-2},{yPercent:2,ease:"none",scrollTrigger:{trigger:section,start:"top bottom",end:"bottom top",scrub:1.5}});
-    });
-  });
-  // Refresh after asynchronously loaded header/footer and images settle.
-  const refresh=()=>ST.refresh();
-  window.addEventListener("load",refresh,{once:true});
-  document.fonts?.ready?.then(refresh);
-  let pending;
-  const observer=new MutationObserver(()=>{clearTimeout(pending);pending=setTimeout(refresh,220)});
-  observer.observe(document.querySelector("#smooth-content")||document.body,{childList:true,subtree:false});
-  window.addEventListener("pagehide",()=>{observer.disconnect();clearTimeout(pending)},{once:true});
-  activate(0);
+/* Adomantra | continuous scene director. Config-driven, scroll-linked, reversible. */
+(()=>{"use strict";const G=window.gsap,S=window.ScrollTrigger;if(!G||!S||matchMedia("(prefers-reduced-motion: reduce)").matches)return;G.registerPlugin(S);
+const cfg=[
+["hero","zoom",1.1],["intro","rise",1],["statement","mask",1.15],["expertise","slide",1],["projects","stack",1.1],["journey","native",1],["achievements","native",1],["marquee","native",1],["showcase","native",1],["services-intro","rise",1],["approach","native",1],["service-details","slide",1],["window","native",1],["banner","mask",1],["testimonials","stack",1],["insights","slide",1],["horizontal","native",1],["faq","rise",1]
+],map=Object.fromEntries(cfg.map(([id,type,power])=>[id,{type,power}])),scenes=[...document.querySelectorAll("[data-ado-scene]")].filter(e=>!e.parentElement?.closest("[data-ado-scene]")),mobile=matchMedia("(max-width:767px)").matches;
+if(!scenes.length)return;
+const el=(tag,cls,html="")=>{const n=document.createElement(tag);n.className=cls;n.innerHTML=html;return n},ui=el("div","ado-director-ui",'<div class="ado-director-progress"></div><div class="ado-director-counter"><b>01</b><i></i><span>18</span></div><div class="ado-director-next"><small>UP NEXT</small><strong></strong></div>'),wipe=el("div","ado-director-wipe",'<div class="ado-director-wipe-inner"><span></span></div>');document.body.append(ui,wipe);
+const bar=ui.querySelector(".ado-director-progress"),counter=ui.querySelector("b"),next=ui.querySelector("strong"),wi=wipe.firstElementChild,wiText=wi.firstElementChild,tl=G.timeline({paused:true}),clean=s=>s.replace(/-/g," ").replace(/\b\w/g,c=>c.toUpperCase()),sceneName=s=>clean(s.dataset.adoScene||"");
+G.to(bar,{scaleX:1,ease:"none",scrollTrigger:{start:0,end:"max",scrub:.4}});
+const active=scenes.filter(s=>s.getBoundingClientRect().height>20);
+active.forEach((s,i)=>{
+ const key=s.dataset.adoScene,config=map[key]||{type:"rise",power:1},native=config.type==="native",h=[...s.querySelectorAll("h1,h2")].filter(x=>!x.closest(".swiper,.accordion,[data-ado-scene]:not(:scope)")).slice(0,2),copy=[...s.querySelectorAll("p")].filter(x=>!x.closest(".swiper,.accordion,form")).slice(0,2),cards=[...s.querySelectorAll(".features-card,.service-card,.project-card")].filter(x=>!x.closest(".swiper,.accordion")).slice(0,5);
+ // One scrubbed timeline per scene; each transition is reversible with scrolling.
+ if(!native){
+  const targets=[...h,...copy],t=G.timeline({scrollTrigger:{trigger:s,start:"top 95%",end:"top 22%",scrub:mobile?.7:1.15,invalidateOnRefresh:true}});
+  if(targets.length){const from={rise:{y:mobile?24:75,opacity:.15},slide:{x:mobile?-24:-100,opacity:.15},mask:{clipPath:"inset(0 0 100% 0)",y:25},stack:{y:95,scale:.92,opacity:.15},zoom:{scale:1.12,y:45,opacity:.1}}[config.type]||{y:45,opacity:.1};t.fromTo(targets,from,{x:0,y:0,scale:1,opacity:1,clipPath:"inset(0 0 0% 0)",stagger:.08,ease:"none",duration:1},0)}
+  if(cards.length&&key!=="hero")t.fromTo(cards,{y:mobile?18:60,scale:.96,opacity:.4},{y:0,scale:1,opacity:1,stagger:.09,ease:"none",duration:.9},.15);
+  // Section outgoing motion links to next section's incoming motion.
+  if(i<active.length-1&&h.length)G.to(h,{y:mobile?-12:-42,opacity:.75,ease:"none",scrollTrigger:{trigger:s,start:"bottom 85%",end:"bottom 15%",scrub:1}});
  }
- if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init,{once:true});else init();
+ S.create({trigger:s,start:"top 55%",end:"bottom 45%",onToggle:self=>{if(!self.isActive)return;counter.textContent=String(i+1).padStart(2,"0");next.textContent=active[i+1]?sceneName(active[i+1]):"Let's talk"}});
+ // Interconnected handoff at the actual boundary; one overlay reused for all scenes.
+ if(i<active.length-1){
+  const dest=active[i+1],special=native||map[dest.dataset.adoScene]?.type==="native";
+  if(!special)S.create({trigger:dest,start:"top 100%",end:"top 55%",onUpdate:self=>{
+   if(!self.isActive){if(wipe.dataset.scene===dest.dataset.adoScene){wipe.style.opacity="0";wipe.style.visibility="hidden"}return}
+   wipe.dataset.scene=dest.dataset.adoScene;wiText.textContent=sceneName(dest);wipe.style.visibility="visible";
+   const p=self.progress;wipe.style.opacity=String(Math.sin(p*Math.PI)*.9);
+   wi.style.transform="translate3d(0,"+((1-p)*90)+"%,0) scale("+(1.05-p*.05)+")";
+   wiText.style.transform="translate3d(0,"+((1-p)*30)+"px,0)";
+  },onLeave:()=>{wipe.style.opacity="0";wipe.style.visibility="hidden"},onLeaveBack:()=>{wipe.style.opacity="0";wipe.style.visibility="hidden"}});
+ }
+});
+const refresh=()=>S.refresh();window.addEventListener("load",refresh,{once:true});document.fonts?.ready?.then(refresh);
 })();
