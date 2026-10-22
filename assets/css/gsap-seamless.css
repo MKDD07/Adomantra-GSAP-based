@@ -1,18 +1,17 @@
-/* Adomantra — unified editorial motion design */
-:root{--ado-ink:#171717;--ado-paper:#faf9f6;--ado-accent:#e52c35;--ado-ease:cubic-bezier(.22,1,.36,1)}
+/* Compact cinematic skin — all transitions driven by one configuration */
+:root{--ado-cinema-accent:#e52c35;--ado-cinema-ink:#141414}
 html{scroll-behavior:smooth}body{overflow-x:clip}
-[data-ado-scene]{position:relative;isolation:isolate;--ado-scene-progress:0}
-[data-ado-scene]:before{content:"";position:absolute;inset:0;pointer-events:none;z-index:-1;background:radial-gradient(ellipse 70% 55% at 95% 15%,rgba(229,44,53,.045),transparent 75%);opacity:.8}
-[data-ado-scene="hero"]:before,[data-ado-scene="journey"]:before,[data-ado-scene="showcase"]:before{background:radial-gradient(ellipse 60% 80% at 80% 20%,rgba(229,44,53,.075),transparent 75%)}
+[data-ado-scene]{position:relative;isolation:isolate}
 [data-ado-scene] h1,[data-ado-scene] h2{letter-spacing:-.035em;text-wrap:balance}
-[data-ado-scene] p{max-width:80ch}
-.ado-cinema-progress{position:fixed;top:0;left:0;right:0;height:3px;background:var(--ado-accent);transform:scaleX(0);transform-origin:left;z-index:99999;pointer-events:none}
-.ado-cinema-rail{position:fixed;right:clamp(12px,2vw,32px);top:50%;transform:translateY(-50%);z-index:90;display:flex;flex-direction:column;gap:9px;pointer-events:none}
-.ado-cinema-rail span{width:3px;height:16px;border-radius:8px;background:currentColor;opacity:.16;transform-origin:center;transition:opacity .35s,height .35s,background .35s}
-.ado-cinema-rail span.is-active{height:29px;opacity:.8;background:var(--ado-accent)}
-.ado-cinema-wipe{position:fixed;inset:0;z-index:9998;pointer-events:none;background:var(--ado-accent);transform:translateY(101%);visibility:hidden}
-.ado-cinema-bridge{position:absolute;left:50%;bottom:0;width:1px;height:clamp(40px,6vw,100px);background:linear-gradient(transparent,rgba(229,44,53,.35));transform:translate(-50%,50%);pointer-events:none;z-index:3}
-[data-ado-scene] .features-card,[data-ado-scene] .service-card{backface-visibility:hidden}
-[data-ado-scene] img{backface-visibility:hidden}
-@media(max-width:991px){.ado-cinema-rail{display:none}[data-ado-scene] h1,[data-ado-scene] h2{letter-spacing:-.025em}.ado-cinema-bridge{height:40px}}
-@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto!important}.ado-cinema-progress,.ado-cinema-rail,.ado-cinema-wipe,.ado-cinema-bridge{display:none!important}[data-ado-scene] *,[data-ado-scene] *:before,[data-ado-scene] *:after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+.ado-director-ui{position:fixed;inset:0;pointer-events:none;z-index:9990}
+.ado-director-progress{position:absolute;top:0;left:0;width:100%;height:3px;background:var(--ado-cinema-accent);transform:scaleX(0);transform-origin:left}
+.ado-director-counter{position:absolute;right:clamp(14px,2.2vw,36px);top:50%;transform:translateY(-50%);display:flex;flex-direction:column;align-items:center;gap:9px;color:var(--ado-cinema-accent);font:600 12px/1 sans-serif}
+.ado-director-counter i{height:45px;width:1px;background:currentColor;opacity:.4}
+.ado-director-counter span{opacity:.45}
+.ado-director-next{position:absolute;right:clamp(16px,3vw,45px);bottom:clamp(24px,3vw,45px);display:flex;gap:6px;flex-direction:column;align-items:flex-end;max-width:150px;text-align:right;font:600 11px/1.4 sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--ado-cinema-accent);opacity:.7}
+.ado-director-next small{font-size:9px;opacity:.65}
+.ado-director-wipe{position:fixed;inset:0;z-index:9000;pointer-events:none;opacity:0;visibility:hidden;overflow:hidden}
+.ado-director-wipe-inner{position:absolute;inset:0;display:grid;place-items:center;background:var(--ado-cinema-accent);color:#fff;clip-path:polygon(0 0,100% 0,100% 100%,0 100%);will-change:transform}
+.ado-director-wipe-inner span{font:700 clamp(36px,8vw,132px)/.95 sans-serif;letter-spacing:-.07em;text-align:center;padding:4vw;max-width:90vw;text-transform:uppercase;will-change:transform}
+@media(max-width:991px){.ado-director-counter,.ado-director-next{display:none}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto!important}.ado-director-ui,.ado-director-wipe{display:none!important}}
